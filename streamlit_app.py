@@ -9,6 +9,8 @@ import os
 os.environ["OPENAI_API_KEY"] = st.secrets["general"]["OPENAI_API_KEY"]
 os.environ["GROQ_API_KEY"] = st.secrets["general"]["GROQ_API_KEY"]
 
+st.set_page_config(page_title="AI Ideas Explorer", page_icon="💡")
+
 # Initialize embeddings
 @st.cache_resource
 def get_embeddings():
@@ -20,14 +22,6 @@ def load_data():
     try:
         conn = st.connection("gsheets", type=GSheetsConnection)
         df = conn.read(worksheet="Ideas", ttl="10m", usecols=[0, 1, 2], nrows=210)
-        
-        # Debug: Print DataFrame information
-        # st.write("DataFrame Debug:")
-        # st.write("DataFrame shape:", df.shape)
-        # st.write("Columns:", df.columns)
-        # st.write("First few rows:")
-        # st.write(df.head())
-        
         return df
     except Exception as e:
         st.error(f"Error loading data: {e}")
@@ -41,28 +35,13 @@ def create_vector_store(_embeddings, df):
         return None
     
     try:
-        # Ensure column names are correct
         df.columns = ['Idea', 'Category', 'How']
-        
-        # Debug: Check data before creating embeddings
-        # st.write("Data before embedding:")
-        # st.write(df.head())
-        
         text_data = [
             f"Idea: {idea}; Category: {category}; How: {how}"
             for idea, category, how in zip(df['Idea'], df['Category'], df['How'])
         ]
         
-        # Debug: Check text data
-        # st.write("Text Data:")
-        # st.write(text_data[:5])  # Print first 5 entries
-        
-        # Create metadata list
         metadatas = df.to_dict('records')
-        
-        # Debug: Check metadata
-        # st.write("Metadata (first few):")
-        # st.write(metadatas[:5])
         
         vector_store = FAISS.from_texts(
             texts=text_data, 
@@ -76,7 +55,8 @@ def create_vector_store(_embeddings, df):
 
 # Main Streamlit app
 def main():
-    st.title("AI Ideas Explorer")
+    st.title("🌟 AI Ideas Explorer")
+    st.markdown("### Explore and discover new ideas with our AI-powered search engine")
     
     # Get embeddings
     embeddings = get_embeddings()
@@ -94,7 +74,7 @@ def main():
         return
     
     # User query input
-    user_query = st.text_input("Ask a question about ideas:")
+    user_query = st.text_input("🔍 Ask a question about ideas:", placeholder="Type your question here...")
     
     if user_query:
         try:
@@ -123,14 +103,16 @@ def main():
             else:
                 st.write("No relevant results found.")
 
-            # Debug: Print results
-            # st.write("Search Results Debug:")
             for result in results:
-                # st.write("Result Text:", result.page_content)
                 st.write("Result Metadata:", result.metadata)
         
         except Exception as e:
             st.error(f"Error processing query: {e}")
+    
+    # Button to clear input
+    if st.button("Explore Ideas"):
+        user_query = ""
+        st.experimental_rerun()
 
 if __name__ == "__main__":
     main()
