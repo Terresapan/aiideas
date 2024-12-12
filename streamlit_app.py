@@ -8,6 +8,10 @@ import os
 # Set API keys
 os.environ["OPENAI_API_KEY"] = st.secrets["general"]["OPENAI_API_KEY"]
 os.environ["GROQ_API_KEY"] = st.secrets["general"]["GROQ_API_KEY"]
+os.environ["LANGCHAIN_TRACING_V2"] = "true"
+os.environ["LANGCHAIN_API_KEY"] = st.secrets["LANGCHAIN_API_KEY"]["API_KEY"]
+os.environ["LANGCHAIN_ENDPOINT"]="https://api.smith.langchain.com"
+os.environ["LANGCHAIN_PROJECT"] = "AI Ideas Explorer"
 
 st.set_page_config(page_title="AI Ideas Explorer", page_icon="💡")
 
@@ -75,6 +79,11 @@ def main():
     
     # User query input
     user_query = st.text_input("🔍 Ask a question about ideas:", placeholder="Type your question here...")
+
+    # Button to clear input
+    if st.button("Explore Ideas"):
+        st.session_state["user_query"] = ""  # Assuming `user_query` is stored in `session_state`
+        st.rerun()
     
     if user_query:
         try:
@@ -109,10 +118,5 @@ def main():
         except Exception as e:
             st.error(f"Error processing query: {e}")
     
-    # Button to clear input
-    if st.button("Explore Ideas"):
-        user_query = ""
-        st.experimental_rerun()
-
 if __name__ == "__main__":
     main()
