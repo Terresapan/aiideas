@@ -3,6 +3,7 @@ from streamlit_gsheets import GSheetsConnection
 from langchain_groq import ChatGroq
 from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
+from langsmith import traceable
 import os
 
 # Set API keys
@@ -17,11 +18,13 @@ st.set_page_config(page_title="AI Ideas Explorer", page_icon="💡")
 
 # Initialize embeddings
 @st.cache_resource
+@traceable(type="embeddings")
 def get_embeddings():
     return OpenAIEmbeddings(model="text-embedding-3-small")
 
 # Load data from Google Sheets
 @st.cache_data(ttl=600)
+@traceable(type="data")
 def load_data():
     try:
         conn = st.connection("gsheets", type=GSheetsConnection)
@@ -33,6 +36,7 @@ def load_data():
 
 # Create vector store
 @st.cache_resource
+@traceable(type="vector_store")
 def create_vector_store(_embeddings, df):
     if df is None or df.empty:
         st.error("DataFrame is None or empty")
@@ -60,7 +64,7 @@ def create_vector_store(_embeddings, df):
 # Main Streamlit app
 def main():
     st.title("🌟 AI Ideas Explorer")
-    st.markdown("### Explore and discover new ideas with our AI-powered search engine")
+    st.markdown("### Explore and discover AI related new ideas")
     
     # Get embeddings
     embeddings = get_embeddings()
@@ -77,15 +81,21 @@ def main():
         st.error("Could not create vector store")
         return
     
-    # User query input
-    user_query = st.text_input("🔍 Ask a question about ideas:", placeholder="Type your question here...")
+    # Initialize session state for query
+    if "user_query" not in st.session_state:
+        st.session_state["user_query"] = ""
 
-    # Button to clear input
-    if st.button("Explore Ideas"):
-        st.session_state["user_query"] = ""  # Assuming `user_query` is stored in `session_state`
-        st.rerun()
-    
-    if user_query:
+    # User query input
+    user_query = st.text_input("🔍 Ask a question about ideas:", 
+                               placeholder="Type your question here...",
+                               key="user_query")
+
+    # Button to trigger search
+    button_clicked = st.button("Explore Ideas")
+
+    # Process query only if Enter is pressed or button is clicked
+    if st.session_state["user_query"] and (st.session_state.get("process_query") or button_clicked):
+        st.session_state["process_query"] = False  # Reset the flag
         try:
             # Search in vector store
             results = vector_store.similarity_search(user_query, k=5)
@@ -118,5 +128,10 @@ def main():
         except Exception as e:
             st.error(f"Error processing query: {e}")
     
+    # Set flag to process query when Enter is pressed
+    if user_query and not button_clicked:
+        st.session_state["process_query"] = True
+
 if __name__ == "__main__":
     main()
+
