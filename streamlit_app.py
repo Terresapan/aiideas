@@ -24,7 +24,6 @@ def get_embeddings():
 
 # Load data from Google Sheets
 @st.cache_data(ttl=600)
-@traceable(type="data")
 def load_data():
     try:
         conn = st.connection("gsheets", type=GSheetsConnection)
