@@ -18,7 +18,7 @@ st.set_page_config(page_title="AI Ideas Explorer", page_icon="💡")
 
 # Initialize embeddings
 @st.cache_resource
-@traceable(type="embeddings")
+@traceable()
 def get_embeddings():
     return OpenAIEmbeddings(model="text-embedding-3-small")
 
@@ -35,7 +35,7 @@ def load_data():
 
 # Create vector store
 @st.cache_resource
-@traceable(type="vector_store")
+@traceable(metadata={"vectordb": "FAISS"})
 def create_vector_store(_embeddings, df):
     if df is None or df.empty:
         st.error("DataFrame is None or empty")
@@ -61,6 +61,7 @@ def create_vector_store(_embeddings, df):
         return None
 
 # Main Streamlit app
+@traceable()
 def main():
     st.title("🌟 AI Ideas Explorer")
     st.markdown("### Explore and discover AI related new ideas")
