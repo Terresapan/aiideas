@@ -20,11 +20,18 @@ st.set_page_config(page_title="AI Ideas Explorer", page_icon="💡")
 @st.cache_resource
 @traceable()
 def get_embeddings():
+    """
+    Initialize and return OpenAI embeddings.
+    """
     return OpenAIEmbeddings(model="text-embedding-3-small")
 
 # Load data from Google Sheets
 @st.cache_data(ttl=600)
 def load_data():
+    """
+    Load data from Google Sheets using the GSheetsConnection.
+    Returns a DataFrame with the data.
+    """
     try:
         conn = st.connection("gsheets", type=GSheetsConnection)
         df = conn.read(worksheet="Ideas", ttl="10m", usecols=[0, 1, 2], nrows=210)
@@ -37,6 +44,10 @@ def load_data():
 @st.cache_resource
 @traceable(metadata={"vectordb": "FAISS"})
 def create_vector_store(_embeddings, df):
+    """
+    Create a FAISS vector store from the DataFrame and embeddings.
+    Returns the vector store.
+    """
     if df is None or df.empty:
         st.error("DataFrame is None or empty")
         return None
@@ -63,6 +74,9 @@ def create_vector_store(_embeddings, df):
 # Main Streamlit app
 @traceable()
 def main():
+    """
+    Main function to run the Streamlit app.
+    """
     st.title("🌟 AI Ideas Explorer")
     st.markdown("### Explore and discover AI related new ideas")
     
